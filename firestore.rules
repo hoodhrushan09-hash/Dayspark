@@ -89,6 +89,42 @@ service cloud.firestore {
         allow create, update: if isOwner(userId) && isValidId(reviewId) && request.resource.data.userId == userId;
         allow delete: if isOwner(userId) && isValidId(reviewId);
       }
+
+      match /projects/{projectId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(projectId) && request.resource.data.userId == userId;
+        allow delete: if isOwner(userId) && isValidId(projectId);
+      }
+
+      match /notes/{noteId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(noteId) && request.resource.data.userId == userId;
+        allow delete: if isOwner(userId) && isValidId(noteId);
+      }
+
+      match /expenses/{expenseId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(expenseId) && request.resource.data.userId == userId;
+        allow delete: if isOwner(userId) && isValidId(expenseId);
+      }
+
+      match /budgets/{budgetId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(budgetId) && request.resource.data.userId == userId;
+        allow delete: if isOwner(userId) && isValidId(budgetId);
+      }
+
+      match /reminders/{reminderId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(reminderId) && request.resource.data.userId == userId;
+        allow delete: if isOwner(userId) && isValidId(reminderId);
+      }
+
+      match /plans/{planId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(planId) && request.resource.data.userId == userId;
+        allow delete: if isOwner(userId) && isValidId(planId);
+      }
     }
   }
 }

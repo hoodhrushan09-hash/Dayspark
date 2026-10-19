@@ -3,9 +3,20 @@ import { getAuth } from 'firebase/auth';
 import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
+const resolvedFirebaseConfig = {
+  ...firebaseConfig,
+  ...(typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_PROJECT_ID ? { projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID } : {}),
+  ...(typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_API_KEY ? { apiKey: import.meta.env.VITE_FIREBASE_API_KEY } : {}),
+  ...(typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_APP_ID ? { appId: import.meta.env.VITE_FIREBASE_APP_ID } : {}),
+  ...(typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN ? { authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN } : {}),
+  ...(typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_DATABASE_ID ? { firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID } : {}),
+  ...(typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET ? { storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET } : {}),
+  ...(typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID ? { messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID } : {}),
+};
+
+const app = initializeApp(resolvedFirebaseConfig);
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, { ignoreUndefinedProperties: true }, firebaseConfig.firestoreDatabaseId);
+export const db = initializeFirestore(app, { ignoreUndefinedProperties: true }, resolvedFirebaseConfig.firestoreDatabaseId);
 
 export function removeUndefinedFields<T extends Record<string, any>>(obj: T): T {
   const result: Record<string, any> = {};

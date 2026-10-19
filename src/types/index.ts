@@ -17,6 +17,9 @@ export interface Task {
   tags?: string[];
   isPriorityToday?: boolean;
   recurrence?: RecurrenceType;
+  calendarStartTime?: string; // HH:mm for calendar time blocking
+  calendarDuration?: number; // minutes
+  kanbanColumn?: 'todo' | 'inprogress' | 'done';
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
@@ -189,6 +192,130 @@ export interface WeeklyReview {
   updatedAt: string;
 }
 
+// ==========================================
+// WORKSPACE EXPANSION MODULES
+// ==========================================
+
+// MODULE 1: AI Planner
+export interface ScheduledBlock {
+  id: string;
+  title: string;
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  durationMinutes: number;
+  priority: Priority;
+  category: string;
+  reasoning?: string;
+  isUrgent?: boolean;
+  taskId?: string;
+}
+
+export interface PlannerPlan {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  originalPrompt: string;
+  planSummary: string;
+  totalPlannedMinutes: number;
+  availableMinutes: number;
+  conflictWarnings?: string[];
+  scheduledBlocks: ScheduledBlock[];
+  status: 'draft' | 'accepted' | 'archived';
+  createdAt: string;
+}
+
+// MODULE 3: Smart Notes & Knowledge Hub
+export interface NoteChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface Note {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  tags?: string[];
+  isPinned?: boolean;
+  isArchived?: boolean;
+  color?: string;
+  linkedTaskId?: string;
+  linkedGoalId?: string;
+  linkedProjectId?: string;
+  checklists?: NoteChecklistItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// MODULE 5: Personal Expense Tracker
+export type ExpenseCategory =
+  | 'Housing'
+  | 'Food & Dining'
+  | 'Transportation'
+  | 'Utilities'
+  | 'Health & Fitness'
+  | 'Entertainment'
+  | 'Education'
+  | 'Shopping'
+  | 'Work & Business'
+  | 'Personal'
+  | 'Other';
+
+export interface Expense {
+  id: string;
+  userId: string;
+  amount: number;
+  type: 'expense' | 'income';
+  category: ExpenseCategory | string;
+  date: string; // YYYY-MM-DD
+  description: string;
+  notes?: string;
+  paymentMethod?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Budget {
+  id: string; // YYYY-MM
+  userId: string;
+  month: string; // YYYY-MM
+  monthlyLimit: number;
+  categoryBudgets?: Record<string, number>;
+  currency: string;
+  updatedAt: string;
+}
+
+// MODULE 6: Projects and Kanban Boards
+export interface Project {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  color: string;
+  deadline?: string; // YYYY-MM-DD
+  status: 'active' | 'completed' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+}
+
+// MODULE 7: Smart Reminders & Notifications
+export type ReminderStatus = 'pending' | 'dismissed' | 'completed' | 'snoozed';
+export type ReminderAssociatedType = 'task' | 'habit' | 'goal' | 'project' | 'custom';
+
+export interface Reminder {
+  id: string;
+  userId: string;
+  title: string;
+  remindAt: string; // ISO string or YYYY-MM-DDTHH:mm
+  associatedType: ReminderAssociatedType;
+  associatedId?: string;
+  status: ReminderStatus;
+  snoozedUntil?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // FEATURE 6: Dashboard Customization
 export type DashboardWidgetId =
   | 'score'
@@ -197,6 +324,10 @@ export type DashboardWidgetId =
   | 'habits'
   | 'focus'
   | 'goals'
+  | 'projects'
+  | 'notes'
+  | 'expenses'
+  | 'reminders'
   | 'achievements'
   | 'weekly';
 
@@ -226,6 +357,7 @@ export interface UserProfile {
   defaultTaskDuration: number;
   totalXP?: number;
   level?: number;
+  preferredCurrency?: string;
   dashboardConfig?: DashboardConfig;
   createdAt: string;
   updatedAt: string;
@@ -233,9 +365,13 @@ export interface UserProfile {
 
 export type AppView =
   | 'today'
-  | 'upcoming'
+  | 'planner'
+  | 'projects'
+  | 'notes'
   | 'calendar'
   | 'tasks'
+  | 'upcoming'
+  | 'expenses'
   | 'goals'
   | 'habits'
   | 'focus'
@@ -243,3 +379,4 @@ export type AppView =
   | 'achievements'
   | 'statistics'
   | 'settings';
+

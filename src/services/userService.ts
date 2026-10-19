@@ -19,8 +19,12 @@ export const DEFAULT_DASHBOARD_CONFIG: DashboardConfig = {
     { id: 'habits', label: 'Daily Habits', description: 'Habit check-in matrix and streak tracker', enabled: true, order: 4 },
     { id: 'focus', label: 'Focus Timer', description: 'Quick-access Pomodoro countdown', enabled: true, order: 5 },
     { id: 'goals', label: 'Active Goals', description: 'Target milestones and progress bars', enabled: true, order: 6 },
-    { id: 'achievements', label: 'Recent Badges', description: 'Latest unlocked productivity achievements', enabled: true, order: 7 },
-    { id: 'weekly', label: 'Weekly Summary', description: 'Quick weekly snapshot and review', enabled: true, order: 8 },
+    { id: 'projects', label: 'Active Projects', description: 'Overview of projects and completion progress', enabled: true, order: 7 },
+    { id: 'notes', label: 'Recent Notes', description: 'Pinned notes and quick thoughts', enabled: true, order: 8 },
+    { id: 'reminders', label: 'Upcoming Reminders', description: 'Active alerts and scheduled reminders', enabled: true, order: 9 },
+    { id: 'expenses', label: 'Monthly Spending', description: 'Monthly expense totals and budget progress', enabled: true, order: 10 },
+    { id: 'achievements', label: 'Recent Badges', description: 'Latest unlocked productivity achievements', enabled: true, order: 11 },
+    { id: 'weekly', label: 'Weekly Summary', description: 'Quick weekly snapshot and review', enabled: true, order: 12 },
   ],
 };
 
@@ -123,6 +127,12 @@ export async function deleteUserData(userId: string): Promise<void> {
     'xpTransactions',
     'achievements',
     'weeklyReviews',
+    'projects',
+    'notes',
+    'expenses',
+    'budgets',
+    'reminders',
+    'plans',
   ];
   try {
     for (const sub of subcollections) {

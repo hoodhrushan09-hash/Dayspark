@@ -10,12 +10,18 @@ import {
   Trash2,
   CheckCircle2,
   AlertTriangle,
+  Database,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme, ACCENT_COLORS } from '../../contexts/ThemeContext';
 import { Modal } from '../common/Modal';
 
-export const SettingsView: React.FC = () => {
+interface SettingsViewProps {
+  onOpenBackupModal?: () => void;
+}
+
+export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenBackupModal }) => {
   const { currentUser, userProfile, updateProfileData, signOut, deleteAccount } = useAuth();
   const { theme, setTheme, accentColor, setAccentColor, reducedMotion, setReducedMotion } = useTheme();
 
@@ -23,6 +29,7 @@ export const SettingsView: React.FC = () => {
   const [dateFormat, setDateFormat] = useState(userProfile?.dateFormat || 'MMM D, YYYY');
   const [timeFormat, setTimeFormat] = useState(userProfile?.timeFormat || '12h');
   const [weekStart, setWeekStart] = useState(userProfile?.weekStart || 'monday');
+  const [preferredCurrency, setPreferredCurrency] = useState(userProfile?.preferredCurrency || 'USD');
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
@@ -41,6 +48,7 @@ export const SettingsView: React.FC = () => {
         dateFormat,
         timeFormat,
         weekStart,
+        preferredCurrency,
       });
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
@@ -118,7 +126,7 @@ export const SettingsView: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-semibold text-[#262626] dark:text-[#F3F3F0] mb-1 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-[#747474]" /> Date Format
@@ -161,6 +169,25 @@ export const SettingsView: React.FC = () => {
                 <option value="sunday">Sunday</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#262626] dark:text-[#F3F3F0] mb-1">
+                Currency
+              </label>
+              <select
+                value={preferredCurrency}
+                onChange={(e) => setPreferredCurrency(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-[#E8E7E0] dark:border-[#2E302B] bg-white dark:bg-[#262824] text-[#262626] dark:text-[#F3F3F0] hover:border-[#FF7058]/40 transition-colors cursor-pointer"
+              >
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="CAD">CAD (CA$)</option>
+                <option value="AUD">AUD (AU$)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="INR">INR (₹)</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-2">
@@ -181,6 +208,30 @@ export const SettingsView: React.FC = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Data Management & Backups */}
+      <div className="p-6 rounded-3xl border border-[#E8E7E0] dark:border-[#2E302B] bg-[#FFFDF9] dark:bg-[#20221F] shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-[#262626] dark:text-[#F3F3F0] flex items-center gap-2">
+              <Database className="w-4 h-4 text-[#FF7058]" />
+              <span>Workspace Data & Backups</span>
+            </h2>
+            <p className="text-xs text-[#747474] dark:text-[#A0A09B] mt-1">
+              Export your complete tasks, projects, notes, expenses, and habits as JSON or CSV, or restore from a backup.
+            </p>
+          </div>
+          {onOpenBackupModal && (
+            <button
+              onClick={onOpenBackupModal}
+              className="btn-press px-4 py-2 text-xs font-semibold rounded-xl bg-[#FF7058] hover:bg-[#F06148] text-white shadow-xs hover:shadow-md hover:shadow-[#FF7058]/20 transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Manage Backups & Export</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Appearance Section */}

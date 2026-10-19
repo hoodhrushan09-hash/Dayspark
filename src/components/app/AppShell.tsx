@@ -18,6 +18,11 @@ import {
   BookOpen,
   Keyboard,
   Sliders,
+  Sparkles,
+  Folder,
+  DollarSign,
+  Bell,
+  Database,
 } from 'lucide-react';
 import { Logo } from '../common/Logo';
 import { useAuth } from '../../contexts/AuthContext';
@@ -37,6 +42,11 @@ import {
   AchievementKey,
   DashboardConfig,
   Priority,
+  Project,
+  Note,
+  Expense,
+  Budget,
+  Reminder,
 } from '../../types';
 import {
   subscribeTasks,
@@ -76,6 +86,10 @@ import {
   saveWeeklyReview,
 } from '../../services/progressionService';
 import { updateUserProfile } from '../../services/userService';
+import { subscribeProjects } from '../../services/projectService';
+import { subscribeNotes } from '../../services/noteService';
+import { subscribeExpenses, subscribeBudgets } from '../../services/expenseService';
+import { subscribeReminders, showSystemNotification } from '../../services/reminderService';
 
 import { calculateDailyProductivityScore } from '../../lib/score';
 import { XP_REWARDS, getLevelInfo } from '../../lib/gamification';
@@ -93,6 +107,12 @@ import { StatisticsView } from './StatisticsView';
 import { SettingsView } from './SettingsView';
 import { AchievementsView } from './AchievementsView';
 import { WeeklyReviewView } from './WeeklyReviewView';
+import { AIPlannerView } from './AIPlannerView';
+import { ProjectsView } from './ProjectsView';
+import { NotesView } from './NotesView';
+import { ExpensesView } from './ExpensesView';
+import { ReminderInbox } from './ReminderInbox';
+import { BackupModal } from './BackupModal';
 
 import { TaskModal } from './TaskModal';
 import { GoalModal } from './GoalModal';
@@ -120,6 +140,13 @@ export const AppShell: React.FC = () => {
   const [focusSessions, setFocusSessions] = useState<FocusSession[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  // Expanded Workspace persistent state
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+
   // Progression state
   const [dailyScores, setDailyScores] = useState<DailyScore[]>([]);
   const [xpTransactions, setXPTransactions] = useState<XPTransaction[]>([]);
@@ -143,6 +170,8 @@ export const AppShell: React.FC = () => {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isCustomizeDashboardOpen, setIsCustomizeDashboardOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isReminderInboxOpen, setIsReminderInboxOpen] = useState(false);
 
   // Gamification celebrations
   const [levelUpData, setLevelUpData] = useState<{ newLevel: number; totalXP: number } | null>(null);
@@ -175,6 +204,13 @@ export const AppShell: React.FC = () => {
     }, console.error);
     const unsubReviews = subscribeWeeklyReviews(uid, setWeeklyReviews, console.error);
 
+    // Expanded Workspace Collections
+    const unsubProjects = subscribeProjects(uid, setProjects, console.error);
+    const unsubNotes = subscribeNotes(uid, setNotes, console.error);
+    const unsubExpenses = subscribeExpenses(uid, setExpenses, console.error);
+    const unsubBudgets = subscribeBudgets(uid, setBudgets, console.error);
+    const unsubReminders = subscribeReminders(uid, setReminders, console.error);
+
     return () => {
       unsubTasks();
       unsubGoals();
@@ -186,8 +222,35 @@ export const AppShell: React.FC = () => {
       unsubXP?.();
       unsubAchs?.();
       unsubReviews?.();
+      unsubProjects();
+      unsubNotes();
+      unsubExpenses();
+      unsubBudgets();
+      unsubReminders();
     };
   }, [currentUser]);
+
+  // Background reminder notification trigger
+  useEffect(() => {
+    if (reminders.length === 0) return;
+    const notifiedIds = new Set<string>();
+
+    const checkReminders = () => {
+      const nowIso = new Date().toISOString();
+      reminders.forEach((r) => {
+        if (r.status === 'pending' && r.remindAt <= nowIso && !notifiedIds.has(r.id)) {
+          notifiedIds.add(r.id);
+          showSystemNotification(`Reminder: ${r.title}`, {
+            body: `Scheduled for ${new Date(r.remindAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+          });
+        }
+      });
+    };
+
+    checkReminders();
+    const interval = setInterval(checkReminders, 30000);
+    return () => clearInterval(interval);
+  }, [reminders]);
 
   // Total XP & Level calculation
   const totalXP =
@@ -208,12 +271,16 @@ export const AppShell: React.FC = () => {
   useEffect(() => {
     const viewTitles: Record<AppView, string> = {
       today: 'Dashboard | DaySpark',
+      planner: 'AI Planner | DaySpark',
+      projects: 'Projects & Kanban | DaySpark',
+      notes: 'Notes Hub | DaySpark',
       tasks: 'Tasks | DaySpark',
       upcoming: 'Upcoming | DaySpark',
       calendar: 'Calendar | DaySpark',
+      expenses: 'Expenses & Budget | DaySpark',
       goals: 'Goals | DaySpark',
       habits: 'Habits | DaySpark',
-      focus: 'Focus Timer | DaySpark',
+      focus: 'Focus Room | DaySpark',
       reviews: 'Weekly Review | DaySpark',
       achievements: 'Achievements | DaySpark',
       statistics: 'Statistics | DaySpark',
@@ -337,16 +404,23 @@ export const AppShell: React.FC = () => {
 
   const todayTasksRemaining = tasks.filter((t) => t.dueDate === todayStr && !t.completed).length;
   const unlockedBadgesCount = userAchievements.filter((a) => a.unlocked).length;
+  const activeProjectsCount = projects.filter((p) => p.status === 'active').length;
+  const activeNotesCount = notes.filter((n) => !n.isArchived).length;
+  const pendingRemindersCount = reminders.filter((r) => r.status === 'pending').length;
 
   const navigationItems = [
     { id: 'today' as AppView, label: 'Today', icon: Sun, count: todayTasksRemaining },
-    { id: 'upcoming' as AppView, label: 'Upcoming', icon: Compass },
+    { id: 'planner' as AppView, label: 'AI Planner', icon: Sparkles },
     { id: 'calendar' as AppView, label: 'Calendar', icon: Calendar },
     { id: 'tasks' as AppView, label: 'My Tasks', icon: CheckCircle2, count: tasks.filter((t) => !t.completed).length },
-    { id: 'goals' as AppView, label: 'Goals', icon: Target },
+    { id: 'projects' as AppView, label: 'Projects', icon: Folder, count: activeProjectsCount },
+    { id: 'notes' as AppView, label: 'Notes Hub', icon: BookOpen, count: activeNotesCount },
+    { id: 'focus' as AppView, label: 'Focus Room', icon: Clock },
+    { id: 'expenses' as AppView, label: 'Expenses', icon: DollarSign },
     { id: 'habits' as AppView, label: 'Habits', icon: Flame },
-    { id: 'focus' as AppView, label: 'Focus Timer', icon: Clock },
-    { id: 'reviews' as AppView, label: 'Weekly Review', icon: BookOpen },
+    { id: 'goals' as AppView, label: 'Goals', icon: Target },
+    { id: 'upcoming' as AppView, label: 'Upcoming', icon: Compass },
+    { id: 'reviews' as AppView, label: 'Weekly Review', icon: Sliders },
     { id: 'achievements' as AppView, label: 'Achievements', icon: Award, count: unlockedBadgesCount },
     { id: 'statistics' as AppView, label: 'Statistics', icon: BarChart3 },
   ];
@@ -589,14 +663,30 @@ export const AppShell: React.FC = () => {
               <Logo size="md" />
             </a>
 
-            {/* Quick Add icon button */}
-            <button
-              onClick={() => setIsQuickAddOpen(true)}
-              className="btn-press p-1.5 rounded-xl bg-[#FF7058]/10 hover:bg-[#FF7058] text-[#FF7058] hover:text-white transition-all cursor-pointer"
-              title="Quick Add Task (N)"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsReminderInboxOpen(true)}
+                className="btn-press relative p-1.5 rounded-xl text-[#747474] dark:text-[#A0A09B] hover:text-[#FF7058] hover:bg-[#FF7058]/10 transition-all cursor-pointer"
+                title="Reminders Inbox"
+                aria-label="Reminders Inbox"
+              >
+                <Bell className="w-4 h-4" />
+                {pendingRemindersCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[#FF7058] text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                    {pendingRemindersCount > 9 ? '9+' : pendingRemindersCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Quick Add icon button */}
+              <button
+                onClick={() => setIsQuickAddOpen(true)}
+                className="btn-press p-1.5 rounded-xl bg-[#FF7058]/10 hover:bg-[#FF7058] text-[#FF7058] hover:text-white transition-all cursor-pointer"
+                title="Quick Add Task (N)"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Search Trigger with subtle lift & border transition */}
@@ -728,7 +818,19 @@ export const AppShell: React.FC = () => {
         {/* Mobile Top Header */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#E8E7E0] dark:border-[#2E302B] bg-[#FFFDF9] dark:bg-[#1A1B19]">
           <Logo size="sm" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsReminderInboxOpen(true)}
+              className="relative p-2 text-[#747474] hover:text-[#FF7058] hover:bg-[#FF7058]/10 rounded-lg transition-colors"
+              aria-label="Reminders"
+            >
+              <Bell className="w-4 h-4" />
+              {pendingRemindersCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[14px] h-3.5 px-0.5 bg-[#FF7058] text-white text-[8px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                  {pendingRemindersCount > 9 ? '9+' : pendingRemindersCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setIsQuickAddOpen(true)}
               className="p-2 text-[#FF7058] hover:bg-[#FF7058]/10 rounded-lg transition-colors"
@@ -814,6 +916,10 @@ export const AppShell: React.FC = () => {
               recentXPTransactions={xpTransactions}
               userAchievements={userAchievements}
               dashboardConfig={userProfile?.dashboardConfig}
+              projects={projects}
+              notes={notes}
+              expenses={expenses}
+              reminders={reminders}
               onToggleTask={handleToggleTask}
               onEditTask={(t) => {
                 setEditingTask(t);
@@ -829,6 +935,36 @@ export const AppShell: React.FC = () => {
               onToggleHabitDay={handleToggleHabitDay}
               onOpenCustomizeDashboard={() => setIsCustomizeDashboardOpen(true)}
               onNavigate={setActiveView}
+            />
+          )}
+
+          {activeView === 'planner' && (
+            <AIPlannerView
+              tasks={tasks}
+              onNavigateToCalendar={() => setActiveView('calendar')}
+            />
+          )}
+
+          {activeView === 'projects' && (
+            <ProjectsView
+              projects={projects}
+              tasks={tasks}
+              notes={notes}
+              focusSessions={focusSessions}
+              onOpenNewTaskModal={(defaultDate) => {
+                setEditingTask(null);
+                setTaskModalDefaultDate(defaultDate);
+                setIsTaskModalOpen(true);
+              }}
+            />
+          )}
+
+          {activeView === 'notes' && (
+            <NotesView
+              notes={notes}
+              tasks={tasks}
+              goals={goals}
+              projects={projects}
             />
           )}
 
@@ -869,6 +1005,7 @@ export const AppShell: React.FC = () => {
           {activeView === 'calendar' && (
             <CalendarView
               tasks={tasks}
+              reminders={reminders}
               onToggleTask={handleToggleTask}
               onEditTask={(t) => {
                 setEditingTask(t);
@@ -879,6 +1016,22 @@ export const AppShell: React.FC = () => {
                 setTaskModalDefaultDate(defaultDate);
                 setIsTaskModalOpen(true);
               }}
+            />
+          )}
+
+          {activeView === 'focus' && (
+            <FocusTimerView
+              tasks={tasks}
+              projects={projects}
+              focusSessions={focusSessions}
+              onSaveSession={handleSaveFocusSession}
+            />
+          )}
+
+          {activeView === 'expenses' && (
+            <ExpensesView
+              expenses={expenses}
+              budget={budgets[0] || null}
             />
           )}
 
@@ -915,14 +1068,6 @@ export const AppShell: React.FC = () => {
             />
           )}
 
-          {activeView === 'focus' && (
-            <FocusTimerView
-              tasks={tasks}
-              focusSessions={focusSessions}
-              onSaveSession={handleSaveFocusSession}
-            />
-          )}
-
           {activeView === 'reviews' && (
             <WeeklyReviewView
               tasks={tasks}
@@ -951,7 +1096,9 @@ export const AppShell: React.FC = () => {
             />
           )}
 
-          {activeView === 'settings' && <SettingsView />}
+          {activeView === 'settings' && (
+            <SettingsView onOpenBackupModal={() => setIsBackupModalOpen(true)} />
+          )}
         </main>
       </div>
 
@@ -991,13 +1138,18 @@ export const AppShell: React.FC = () => {
         categories={categories}
       />
 
-      {/* Command Palette / Global Search */}
+      {/* Command Palette / Unified Search Across Workspace */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         tasks={tasks}
         goals={goals}
         habits={habits}
+        projects={projects}
+        notes={notes}
+        expenses={expenses}
+        categories={categories}
+        weeklyReviews={weeklyReviews}
         onNavigate={setActiveView}
         onOpenNewTask={() => {
           setEditingTask(null);
@@ -1011,6 +1163,10 @@ export const AppShell: React.FC = () => {
           setEditingHabit(null);
           setIsHabitModalOpen(true);
         }}
+        onOpenNewProject={() => setActiveView('projects')}
+        onOpenNewNote={() => setActiveView('notes')}
+        onOpenNewExpense={() => setActiveView('expenses')}
+        onOpenNewReminder={() => setIsReminderInboxOpen(true)}
       />
 
       {/* Dashboard Customization Modal */}
@@ -1041,6 +1197,33 @@ export const AppShell: React.FC = () => {
       <AchievementToast
         achievementKey={unlockedToastKey}
         onDismiss={() => setUnlockedToastKey(null)}
+      />
+
+      {/* Reminders Inbox Modal */}
+      <ReminderInbox
+        isOpen={isReminderInboxOpen}
+        onClose={() => setIsReminderInboxOpen(false)}
+        reminders={reminders}
+        tasks={tasks}
+      />
+
+      {/* Workspace Data Backup & Export Modal */}
+      <BackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+        data={{
+          tasks,
+          projects,
+          notes,
+          habits,
+          habitRecords,
+          goals,
+          focusSessions,
+          weeklyReviews,
+          expenses,
+          budgets,
+          reminders,
+        }}
       />
     </div>
   );

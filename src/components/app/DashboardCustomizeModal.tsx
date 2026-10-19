@@ -17,21 +17,29 @@ export const DashboardCustomizeModal: React.FC<DashboardCustomizeModalProps> = (
   currentConfig,
   onSaveConfig,
 }) => {
+  const mergeWithDefaults = (existing?: DashboardConfig) => {
+    if (!existing?.widgets || existing.widgets.length === 0) {
+      return [...DEFAULT_DASHBOARD_CONFIG.widgets];
+    }
+    const existingMap = new Map(existing.widgets.map((w) => [w.id, w]));
+    const merged: DashboardWidgetConfig[] = [...existing.widgets];
+    DEFAULT_DASHBOARD_CONFIG.widgets.forEach((dw) => {
+      if (!existingMap.has(dw.id)) {
+        merged.push({ ...dw, order: merged.length + 1 });
+      }
+    });
+    return merged.sort((a, b) => a.order - b.order);
+  };
+
   const [widgets, setWidgets] = useState<DashboardWidgetConfig[]>(() => {
-    return currentConfig?.widgets && currentConfig.widgets.length > 0
-      ? [...currentConfig.widgets].sort((a, b) => a.order - b.order)
-      : [...DEFAULT_DASHBOARD_CONFIG.widgets];
+    return mergeWithDefaults(currentConfig);
   });
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync state if modal reopens
   React.useEffect(() => {
     if (isOpen) {
-      setWidgets(
-        currentConfig?.widgets && currentConfig.widgets.length > 0
-          ? [...currentConfig.widgets].sort((a, b) => a.order - b.order)
-          : [...DEFAULT_DASHBOARD_CONFIG.widgets]
-      );
+      setWidgets(mergeWithDefaults(currentConfig));
     }
   }, [isOpen, currentConfig]);
 

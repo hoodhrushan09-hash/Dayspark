@@ -208,6 +208,116 @@
         "updatedAt": { "type": "string" }
       },
       "required": ["id", "userId", "weekStart", "weekEnd"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "User project workspace for grouping responsibilities and Kanban workflows",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "color": { "type": "string", "maxLength": 30 },
+        "deadline": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "enum": ["active", "completed", "archived"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "name", "status"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "User rich note with markdown content, checklists, tags, and linked associations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 250 },
+        "content": { "type": "string", "maxLength": 50000 },
+        "tags": { "type": "array" },
+        "isPinned": { "type": "boolean" },
+        "isArchived": { "type": "boolean" },
+        "color": { "type": "string", "maxLength": 30 },
+        "linkedTaskId": { "type": "string", "maxLength": 128 },
+        "linkedGoalId": { "type": "string", "maxLength": 128 },
+        "linkedProjectId": { "type": "string", "maxLength": 128 },
+        "checklists": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Personal expense or income ledger item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["expense", "income"] },
+        "category": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string", "maxLength": 30 },
+        "description": { "type": "string", "maxLength": 250 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "amount", "type", "category", "date"]
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Monthly spending budget and optional category limits",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "month": { "type": "string", "maxLength": 10 },
+        "monthlyLimit": { "type": "number" },
+        "categoryBudgets": { "type": "object" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "month", "monthlyLimit"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "User scheduled notification reminder for tasks, habits, or custom deadlines",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "remindAt": { "type": "string", "maxLength": 30 },
+        "associatedType": { "type": "string", "enum": ["task", "habit", "goal", "project", "custom"] },
+        "associatedId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["pending", "dismissed", "completed", "snoozed"] },
+        "snoozedUntil": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "remindAt", "status"]
+    },
+    "PlannerPlan": {
+      "title": "PlannerPlan",
+      "description": "Saved AI or manual daily schedules and conflict analysis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 30 },
+        "originalPrompt": { "type": "string", "maxLength": 4000 },
+        "planSummary": { "type": "string", "maxLength": 2000 },
+        "totalPlannedMinutes": { "type": "number" },
+        "availableMinutes": { "type": "number" },
+        "conflictWarnings": { "type": "array" },
+        "scheduledBlocks": { "type": "array" },
+        "status": { "type": "string", "enum": ["draft", "accepted", "archived"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "date", "status"]
     }
   },
   "firestore": {
@@ -254,6 +364,30 @@
     "/users/{userId}/weeklyReviews/{reviewId}": {
       "schema": "WeeklyReview",
       "description": "User weekly review retrospectives and planning"
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": "Project",
+      "description": "User project definitions and milestones"
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": "Note",
+      "description": "User knowledge notes, checklists, and tags"
+    },
+    "/users/{userId}/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "User personal expense and income records"
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+      "schema": "Budget",
+      "description": "Monthly expense budget definitions"
+    },
+    "/users/{userId}/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "Smart reminders and scheduled alerts"
+    },
+    "/users/{userId}/plans/{planId}": {
+      "schema": "PlannerPlan",
+      "description": "Saved AI and manual daily schedules"
     }
   }
 }

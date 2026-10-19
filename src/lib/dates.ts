@@ -288,3 +288,18 @@ export function getCalendarDaysForMonth(
 
   return days;
 }
+
+export function getWeekRange(
+  dateStr: string = getTodayString(),
+  weekStart: 'monday' | 'sunday' = 'monday'
+): { start: string; end: string } {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const curr = new Date(y, m - 1, d);
+  const day = curr.getDay();
+  const diff = weekStart === 'sunday' ? day : (day + 6) % 7;
+  const start = new Date(curr);
+  start.setDate(curr.getDate() - diff);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: getTodayString(start), end: getTodayString(end) };
+}

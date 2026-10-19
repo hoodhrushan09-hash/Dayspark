@@ -13,8 +13,23 @@ import {
   Compass,
   FileText,
   Tag,
+  Folder,
+  BookOpen,
+  DollarSign,
+  Bell,
+  Sparkles,
 } from 'lucide-react';
-import { Task, Goal, Habit, AppView, WeeklyReview, Category } from '../../types';
+import {
+  Task,
+  Goal,
+  Habit,
+  AppView,
+  WeeklyReview,
+  Category,
+  Project,
+  Note,
+  Expense,
+} from '../../types';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -22,12 +37,19 @@ interface CommandPaletteProps {
   tasks: Task[];
   goals: Goal[];
   habits: Habit[];
+  projects?: Project[];
+  notes?: Note[];
+  expenses?: Expense[];
   categories?: Category[];
   weeklyReviews?: WeeklyReview[];
   onNavigate: (view: AppView) => void;
   onOpenNewTask: () => void;
   onOpenNewGoal: () => void;
   onOpenNewHabit: () => void;
+  onOpenNewProject?: () => void;
+  onOpenNewNote?: () => void;
+  onOpenNewExpense?: () => void;
+  onOpenNewReminder?: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -36,12 +58,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   tasks,
   goals,
   habits,
+  projects = [],
+  notes = [],
+  expenses = [],
   categories = [],
   weeklyReviews = [],
   onNavigate,
   onOpenNewTask,
   onOpenNewGoal,
   onOpenNewHabit,
+  onOpenNewProject,
+  onOpenNewNote,
+  onOpenNewExpense,
+  onOpenNewReminder,
 }) => {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -51,7 +80,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 120);
+    }, 100);
     return () => clearTimeout(handler);
   }, [query]);
 
@@ -89,7 +118,39 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             t.description?.toLowerCase().includes(trimmed) ||
             t.category?.toLowerCase().includes(trimmed)
         )
-        .slice(0, 5)
+        .slice(0, 4)
+    : [];
+
+  const filteredProjects = trimmed
+    ? projects
+        .filter(
+          (p) =>
+            p.name.toLowerCase().includes(trimmed) ||
+            p.description?.toLowerCase().includes(trimmed)
+        )
+        .slice(0, 3)
+    : [];
+
+  const filteredNotes = trimmed
+    ? notes
+        .filter(
+          (n) =>
+            n.title.toLowerCase().includes(trimmed) ||
+            n.content.toLowerCase().includes(trimmed) ||
+            n.tags?.some((t) => t.toLowerCase().includes(trimmed))
+        )
+        .slice(0, 3)
+    : [];
+
+  const filteredExpenses = trimmed
+    ? expenses
+        .filter(
+          (e) =>
+            e.description.toLowerCase().includes(trimmed) ||
+            e.category.toLowerCase().includes(trimmed) ||
+            e.notes?.toLowerCase().includes(trimmed)
+        )
+        .slice(0, 3)
     : [];
 
   const filteredGoals = trimmed
@@ -114,28 +175,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         .slice(0, 3)
     : [];
 
-  const filteredCategories = trimmed
-    ? categories
-        .filter((c) => c.name.toLowerCase().includes(trimmed))
-        .slice(0, 3)
-    : [];
-
-  const filteredReviews = trimmed
-    ? weeklyReviews
-        .filter(
-          (r) =>
-            r.reflectionWins?.toLowerCase().includes(trimmed) ||
-            r.reflectionImprovements?.toLowerCase().includes(trimmed) ||
-            r.personalNotes?.toLowerCase().includes(trimmed) ||
-            r.nextWeekPriorities?.some((p) => p.toLowerCase().includes(trimmed))
-        )
-        .slice(0, 3)
-    : [];
-
   const actions = [
     {
       id: 'act_task',
-      label: 'Create new task',
+      label: 'Add a new task',
       icon: Plus,
       color: 'text-[#FF7058]',
       action: () => {
@@ -144,23 +187,46 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       },
     },
     {
-      id: 'act_goal',
-      label: 'Create new goal',
-      icon: Target,
-      color: 'text-[#B8A7F9]',
+      id: 'act_planner',
+      label: 'Open AI Daily Planner',
+      icon: Sparkles,
+      color: 'text-[#FF7058]',
       action: () => {
         onClose();
-        onOpenNewGoal();
+        onNavigate('planner');
       },
     },
     {
-      id: 'act_habit',
-      label: 'Add new habit',
-      icon: Flame,
-      color: 'text-[#FFD166]',
+      id: 'act_note',
+      label: 'Create a note',
+      icon: BookOpen,
+      color: 'text-[#8BCBFA]',
       action: () => {
         onClose();
-        onOpenNewHabit();
+        if (onOpenNewNote) onOpenNewNote();
+        else onNavigate('notes');
+      },
+    },
+    {
+      id: 'act_project',
+      label: 'Create a project',
+      icon: Folder,
+      color: 'text-[#B8A7F9]',
+      action: () => {
+        onClose();
+        if (onOpenNewProject) onOpenNewProject();
+        else onNavigate('projects');
+      },
+    },
+    {
+      id: 'act_expense',
+      label: 'Record expense or income',
+      icon: DollarSign,
+      color: 'text-emerald-500',
+      action: () => {
+        onClose();
+        if (onOpenNewExpense) onOpenNewExpense();
+        else onNavigate('expenses');
       },
     },
     {
@@ -174,94 +240,93 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       },
     },
     {
-      id: 'act_review',
-      label: 'Weekly review & planning',
-      icon: Compass,
-      color: 'text-[#8BCBFA]',
+      id: 'act_reminder',
+      label: 'Set a reminder',
+      icon: Bell,
+      color: 'text-amber-500',
       action: () => {
         onClose();
-        onNavigate('reviews');
-      },
-    },
-    {
-      id: 'act_achievements',
-      label: 'View achievements & badges',
-      icon: Award,
-      color: 'text-[#FFD166]',
-      action: () => {
-        onClose();
-        onNavigate('achievements');
-      },
-    },
-    {
-      id: 'act_calendar',
-      label: 'View calendar',
-      icon: Calendar,
-      color: 'text-[#8BCBFA]',
-      action: () => {
-        onClose();
-        onNavigate('calendar');
+        if (onOpenNewReminder) onOpenNewReminder();
       },
     },
   ];
 
+  const views: { id: AppView; label: string; icon: any }[] = [
+    { id: 'today', label: 'Today Dashboard', icon: Sparkles },
+    { id: 'planner', label: 'AI Planner', icon: Sparkles },
+    { id: 'projects', label: 'Projects & Kanban', icon: Folder },
+    { id: 'notes', label: 'Knowledge Hub & Notes', icon: BookOpen },
+    { id: 'calendar', label: 'Calendar & Time Blocking', icon: Calendar },
+    { id: 'tasks', label: 'All Tasks', icon: CheckCircle2 },
+    { id: 'expenses', label: 'Personal Expenses', icon: DollarSign },
+    { id: 'goals', label: 'Goals & Milestones', icon: Target },
+    { id: 'habits', label: 'Daily Habits', icon: Flame },
+    { id: 'focus', label: 'Focus Room', icon: Clock },
+    { id: 'reviews', label: 'Weekly Review', icon: FileText },
+    { id: 'achievements', label: 'Achievements', icon: Award },
+    { id: 'settings', label: 'Settings', icon: ArrowRight },
+  ];
+
+  const filteredViews = trimmed
+    ? views.filter((v) => v.label.toLowerCase().includes(trimmed))
+    : views.slice(0, 6);
+
+  const hasResults =
+    filteredTasks.length > 0 ||
+    filteredProjects.length > 0 ||
+    filteredNotes.length > 0 ||
+    filteredExpenses.length > 0 ||
+    filteredGoals.length > 0 ||
+    filteredHabits.length > 0 ||
+    filteredViews.length > 0;
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150"
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl bg-white dark:bg-[#20221F] rounded-2xl border border-[#E8E7E0] dark:border-[#2E302B] shadow-2xl overflow-hidden"
-      >
-        {/* Search Input bar */}
-        <div className="flex items-center px-4 border-b border-[#E8E7E0] dark:border-[#2E302B]">
-          <Search className="w-5 h-5 text-[#747474] dark:text-[#A0A09B]" />
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 px-4 animate-in fade-in duration-150">
+      <div className="w-full max-w-xl rounded-3xl border border-[#E8E7E0] dark:border-[#2E302B] bg-[#FFFDF9] dark:bg-[#1A1B19] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        {/* Search Input Bar */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#E8E7E0] dark:border-[#2E302B]">
+          <Search className="w-5 h-5 text-[#FF7058]" />
           <input
             ref={inputRef}
             type="text"
+            placeholder="Search tasks, projects, notes, expenses, goals, or jump to view..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tasks, goals, habits, reviews, or actions..."
-            className="w-full px-3 py-4 text-sm bg-transparent text-[#262626] dark:text-[#F3F3F0] focus:outline-hidden placeholder-[#A0A09B]"
+            className="flex-1 bg-transparent text-sm text-[#262626] dark:text-[#F3F3F0] outline-hidden placeholder:text-[#A0A09B]"
           />
-          {query && (
+          {query ? (
             <button
               onClick={() => setQuery('')}
-              className="p-1 text-[#747474] hover:text-[#262626] dark:hover:text-[#F3F3F0] cursor-pointer"
+              className="p-1 rounded-md text-[#747474] hover:text-[#262626] dark:hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
+          ) : (
+            <kbd className="px-2 py-0.5 text-[10px] font-mono bg-[#F5F5F2] dark:bg-[#282A26] rounded border border-[#E8E7E0] dark:border-[#2E302B] text-[#747474]">
+              ESC
+            </kbd>
           )}
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F5F5F2] dark:bg-[#2E302B] text-[#747474] dark:text-[#A0A09B] font-mono">
-            ESC
-          </span>
         </div>
 
-        {/* Results Area */}
-        <div className="max-h-96 overflow-y-auto p-3 space-y-4 text-xs">
-          {/* Quick Actions (when query is empty) */}
+        {/* Results List */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          {/* Quick Actions (when query is empty or matches) */}
           {!trimmed && (
-            <div>
-              <p className="px-3 py-1 font-semibold text-[#A0A09B] uppercase tracking-wider text-[10px]">
-                Quick Actions & Navigation
-              </p>
-              <div className="space-y-1 mt-1">
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#747474] px-3">
+                Quick Actions
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1">
                 {actions.map((act) => {
                   const Icon = act.icon;
                   return (
                     <button
                       key={act.id}
                       onClick={act.action}
-                      className="group w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#292B28] text-left transition-all duration-150 hover:translate-x-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#FF7058]"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#262626] dark:text-[#F3F3F0] hover:bg-[#F5F5F2] dark:hover:bg-[#282A26] transition-colors text-left cursor-pointer"
                     >
-                      <div className="flex items-center gap-3">
-                        <Icon className={`w-4 h-4 ${act.color} transition-transform duration-200 group-hover:scale-115`} />
-                        <span className="text-sm font-medium text-[#262626] dark:text-[#F3F3F0] transition-colors group-hover:text-[#FF7058]">
-                          {act.label}
-                        </span>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#A0A09B] transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[#FF7058]" />
+                      <Icon className={`w-4 h-4 ${act.color}`} />
+                      <span>{act.label}</span>
                     </button>
                   );
                 })}
@@ -269,181 +334,188 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </div>
           )}
 
-          {/* Search results */}
-          {trimmed && (
-            <>
-              {/* Tasks */}
-              {filteredTasks.length > 0 && (
-                <div>
-                  <p className="px-3 py-1 font-semibold text-[#A0A09B] uppercase tracking-wider text-[10px]">
-                    Tasks ({filteredTasks.length})
-                  </p>
-                  <div className="space-y-1 mt-1">
-                    {filteredTasks.map((task) => (
-                      <button
-                        key={task.id}
-                        onClick={() => {
-                          onClose();
-                          onNavigate('tasks');
-                        }}
-                        className="group w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#292B28] text-left transition-all duration-150 hover:translate-x-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#FF7058]"
-                      >
-                        <div className="flex items-center gap-2.5 truncate">
-                          <CheckCircle2
-                            className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-115 ${
-                              task.completed ? 'text-[#8EDCC0]' : 'text-[#747474] group-hover:text-[#FF7058]'
-                            }`}
-                          />
-                          <span
-                            className={`text-sm truncate transition-colors ${
-                              task.completed ? 'line-through text-[#747474]' : 'text-[#262626] dark:text-[#F3F3F0] group-hover:text-[#FF7058]'
-                            }`}
-                          >
-                            {task.title}
-                          </span>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#F5F5F2] dark:bg-[#323530] text-[#747474] transition-colors group-hover:bg-[#FF7058]/10 group-hover:text-[#FF7058]">
-                          {task.category}
-                        </span>
-                      </button>
-                    ))}
+          {/* Tasks Results */}
+          {filteredTasks.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#747474] px-3">
+                Tasks ({filteredTasks.length})
+              </span>
+              {filteredTasks.map((t) => (
+                <div
+                  key={t.id}
+                  onClick={() => {
+                    onClose();
+                    onNavigate('tasks');
+                  }}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#282A26] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <CheckCircle2
+                      className={`w-4 h-4 shrink-0 ${
+                        t.completed ? 'text-emerald-500' : 'text-[#747474]'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-bold truncate ${
+                        t.completed ? 'line-through text-[#A0A09B]' : 'text-[#262626] dark:text-[#F3F3F0]'
+                      }`}
+                    >
+                      {t.title}
+                    </span>
                   </div>
+                  <span className="text-[10px] text-[#747474] shrink-0 capitalize">
+                    {t.category}
+                  </span>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
 
-              {/* Goals */}
-              {filteredGoals.length > 0 && (
-                <div>
-                  <p className="px-3 py-1 font-semibold text-[#A0A09B] uppercase tracking-wider text-[10px]">
-                    Goals ({filteredGoals.length})
-                  </p>
-                  <div className="space-y-1 mt-1">
-                    {filteredGoals.map((goal) => (
-                      <button
-                        key={goal.id}
-                        onClick={() => {
-                          onClose();
-                          onNavigate('goals');
-                        }}
-                        className="group w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#292B28] text-left transition-all duration-150 hover:translate-x-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#FF7058]"
-                      >
-                        <div className="flex items-center gap-2.5 truncate">
-                          <Target className="w-4 h-4 text-[#B8A7F9] flex-shrink-0 transition-transform duration-200 group-hover:scale-115" />
-                          <span className="text-sm font-medium text-[#262626] dark:text-[#F3F3F0] truncate transition-colors group-hover:text-[#B8A7F9]">
-                            {goal.title}
-                          </span>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#B8A7F9]/20 text-[#6B50CA] dark:text-[#B8A7F9] font-bold">
-                          {goal.progress}%
-                        </span>
-                      </button>
-                    ))}
+          {/* Projects Results */}
+          {filteredProjects.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#747474] px-3">
+                Projects ({filteredProjects.length})
+              </span>
+              {filteredProjects.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => {
+                    onClose();
+                    onNavigate('projects');
+                  }}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#282A26] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Folder
+                      className="w-4 h-4 shrink-0"
+                      style={{ color: p.color || '#B8A7F9' }}
+                    />
+                    <span className="text-xs font-bold text-[#262626] dark:text-[#F3F3F0] truncate">
+                      {p.name}
+                    </span>
                   </div>
+                  <span className="text-[10px] text-[#747474] shrink-0">Project</span>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
 
-              {/* Habits */}
-              {filteredHabits.length > 0 && (
-                <div>
-                  <p className="px-3 py-1 font-semibold text-[#A0A09B] uppercase tracking-wider text-[10px]">
-                    Habits ({filteredHabits.length})
-                  </p>
-                  <div className="space-y-1 mt-1">
-                    {filteredHabits.map((habit) => (
-                      <button
-                        key={habit.id}
-                        onClick={() => {
-                          onClose();
-                          onNavigate('habits');
-                        }}
-                        className="group w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#292B28] text-left transition-all duration-150 hover:translate-x-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#FF7058]"
-                      >
-                        <div className="flex items-center gap-2.5 truncate">
-                          <Flame className="w-4 h-4 text-[#FF7058] flex-shrink-0 transition-transform duration-200 group-hover:scale-115" />
-                          <span className="text-sm font-medium text-[#262626] dark:text-[#F3F3F0] truncate transition-colors group-hover:text-[#FF7058]">
-                            {habit.name}
-                          </span>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#F5F5F2] dark:bg-[#323530] text-[#747474]">
-                          {habit.frequency}
-                        </span>
-                      </button>
-                    ))}
+          {/* Notes Results */}
+          {filteredNotes.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#747474] px-3">
+                Notes ({filteredNotes.length})
+              </span>
+              {filteredNotes.map((n) => (
+                <div
+                  key={n.id}
+                  onClick={() => {
+                    onClose();
+                    onNavigate('notes');
+                  }}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#282A26] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <BookOpen className="w-4 h-4 text-[#8BCBFA] shrink-0" />
+                    <span className="text-xs font-bold text-[#262626] dark:text-[#F3F3F0] truncate">
+                      {n.title}
+                    </span>
                   </div>
+                  <span className="text-[10px] text-[#747474] shrink-0">Note</span>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
 
-              {/* Weekly Reviews */}
-              {filteredReviews.length > 0 && (
-                <div>
-                  <p className="px-3 py-1 font-semibold text-[#A0A09B] uppercase tracking-wider text-[10px]">
-                    Weekly Reviews ({filteredReviews.length})
-                  </p>
-                  <div className="space-y-1 mt-1">
-                    {filteredReviews.map((review) => (
-                      <button
-                        key={review.id}
-                        onClick={() => {
-                          onClose();
-                          onNavigate('reviews');
-                        }}
-                        className="group w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#292B28] text-left transition-all duration-150 hover:translate-x-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#FF7058]"
-                      >
-                        <div className="flex items-center gap-2.5 truncate">
-                          <Compass className="w-4 h-4 text-[#8BCBFA] flex-shrink-0 transition-transform duration-200 group-hover:scale-115" />
-                          <span className="text-sm font-medium text-[#262626] dark:text-[#F3F3F0] truncate transition-colors group-hover:text-[#8BCBFA]">
-                            Review: {review.weekStart} to {review.weekEnd}
-                          </span>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#8BCBFA]/10 text-[#1A4F78] dark:text-[#8BCBFA] font-semibold">
-                          Score: {review.avgDailyScore}
-                        </span>
-                      </button>
-                    ))}
+          {/* Expenses Results */}
+          {filteredExpenses.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#747474] px-3">
+                Expenses & Transactions ({filteredExpenses.length})
+              </span>
+              {filteredExpenses.map((e) => (
+                <div
+                  key={e.id}
+                  onClick={() => {
+                    onClose();
+                    onNavigate('expenses');
+                  }}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#282A26] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <DollarSign className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="text-xs font-bold text-[#262626] dark:text-[#F3F3F0] truncate">
+                      {e.description || e.category}
+                    </span>
                   </div>
+                  <span className="text-[10px] font-mono text-[#747474] shrink-0">
+                    ${e.amount.toFixed(2)}
+                  </span>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
 
-              {/* Categories */}
-              {filteredCategories.length > 0 && (
-                <div>
-                  <p className="px-3 py-1 font-semibold text-[#A0A09B] uppercase tracking-wider text-[10px]">
-                    Categories ({filteredCategories.length})
-                  </p>
-                  <div className="space-y-1 mt-1">
-                    {filteredCategories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          onClose();
-                          onNavigate('tasks');
-                        }}
-                        className="group w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#292B28] text-left transition-all duration-150 hover:translate-x-1 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Tag className="w-4 h-4 text-[#747474]" />
-                          <span className="text-sm font-medium text-[#262626] dark:text-[#F3F3F0]">
-                            {cat.name}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
+          {/* Goals Results */}
+          {filteredGoals.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#747474] px-3">
+                Goals ({filteredGoals.length})
+              </span>
+              {filteredGoals.map((g) => (
+                <div
+                  key={g.id}
+                  onClick={() => {
+                    onClose();
+                    onNavigate('goals');
+                  }}
+                  className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#F5F5F2] dark:hover:bg-[#282A26] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Target className="w-4 h-4 text-[#B8A7F9] shrink-0" />
+                    <span className="text-xs font-bold text-[#262626] dark:text-[#F3F3F0] truncate">
+                      {g.title}
+                    </span>
                   </div>
+                  <span className="text-[10px] text-[#747474] shrink-0">Goal</span>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
 
-              {/* Empty Search State */}
-              {filteredTasks.length === 0 &&
-                filteredGoals.length === 0 &&
-                filteredHabits.length === 0 &&
-                filteredReviews.length === 0 &&
-                filteredCategories.length === 0 && (
-                  <div className="py-8 text-center text-[#747474] dark:text-[#A0A09B]">
-                    <p className="text-sm">No items found matching "{query}"</p>
-                    <p className="text-xs mt-1">Try another search term or create a new item.</p>
-                  </div>
-                )}
-            </>
+          {/* Navigation Views */}
+          {filteredViews.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#747474] px-3">
+                Jump to View
+              </span>
+              {filteredViews.map((v) => {
+                const Icon = v.icon;
+                return (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      onClose();
+                      onNavigate(v.id);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[#262626] dark:text-[#F3F3F0] hover:bg-[#F5F5F2] dark:hover:bg-[#282A26] transition-colors text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className="w-4 h-4 text-[#FF7058]" />
+                      <span>{v.label}</span>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#A0A09B]" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {trimmed && !hasResults && (
+            <div className="p-8 text-center text-xs text-[#747474]">
+              No results found for "{query}". Try searching for a task title, project, or view.
+            </div>
           )}
         </div>
       </div>
