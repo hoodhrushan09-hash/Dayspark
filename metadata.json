@@ -1,0 +1,6 @@
+{
+  "name": "DaySpark",
+  "description": "Make today count, your way. A personal productivity platform for daily planning, tasks, habits, goals, and focus.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

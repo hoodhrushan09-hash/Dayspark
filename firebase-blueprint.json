@@ -1,0 +1,259 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile, personal preferences, and gamification progression",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 256 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "theme": { "type": "string", "enum": ["system", "light", "dark"] },
+        "accentColor": { "type": "string", "maxLength": 20 },
+        "reducedMotion": { "type": "boolean" },
+        "dateFormat": { "type": "string", "enum": ["MMM D, YYYY", "YYYY-MM-DD", "DD/MM/YYYY"] },
+        "timeFormat": { "type": "string", "enum": ["12h", "24h"] },
+        "weekStart": { "type": "string", "enum": ["monday", "sunday"] },
+        "defaultTaskDuration": { "type": "number" },
+        "totalXP": { "type": "number" },
+        "level": { "type": "number" },
+        "dashboardConfig": { "type": "object" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "email"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A scheduled or backlogged task item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "completed": { "type": "boolean" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "category": { "type": "string", "maxLength": 50 },
+        "projectId": { "type": "string", "maxLength": 128 },
+        "dueDate": { "type": "string", "maxLength": 30 },
+        "dueTime": { "type": "string", "maxLength": 10 },
+        "estimatedDuration": { "type": "number" },
+        "tags": { "type": "array" },
+        "isPriorityToday": { "type": "boolean" },
+        "recurrence": { "type": "string", "enum": ["none", "daily", "weekdays", "weekly"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "completedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "completed", "priority", "category"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "User long-term goal with milestones and target dates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "category": { "type": "string", "maxLength": 50 },
+        "targetDate": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "enum": ["active", "paused", "completed", "archived"] },
+        "milestones": { "type": "array" },
+        "progress": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "status"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "Recurring habit tracking definition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "description": { "type": "string", "maxLength": 500 },
+        "category": { "type": "string", "maxLength": 50 },
+        "color": { "type": "string", "maxLength": 30 },
+        "frequency": { "type": "string", "enum": ["daily", "weekdays", "custom"] },
+        "customDays": { "type": "array" },
+        "targetPerDay": { "type": "number" },
+        "archived": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "name", "frequency"]
+    },
+    "HabitRecord": {
+      "title": "HabitRecord",
+      "description": "Daily completion entry for a habit",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "habitId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 30 },
+        "completed": { "type": "boolean" },
+        "count": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "habitId", "date", "completed"]
+    },
+    "FocusSession": {
+      "title": "FocusSession",
+      "description": "Completed focus or break timer session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "taskId": { "type": "string", "maxLength": 128 },
+        "taskTitle": { "type": "string", "maxLength": 200 },
+        "durationMinutes": { "type": "number" },
+        "sessionType": { "type": "string", "enum": ["focus", "short_break", "long_break"] },
+        "startedAt": { "type": "string" },
+        "completedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "durationMinutes", "sessionType"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "User-defined task and goal category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 60 },
+        "color": { "type": "string", "maxLength": 30 },
+        "icon": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "userId", "name", "color"]
+    },
+    "DailyScore": {
+      "title": "DailyScore",
+      "description": "Daily calculated productivity score snapshot and metrics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 30 },
+        "score": { "type": "number" },
+        "taskPoints": { "type": "number" },
+        "habitPoints": { "type": "number" },
+        "goalPoints": { "type": "number" },
+        "focusPoints": { "type": "number" },
+        "tasksCompleted": { "type": "number" },
+        "tasksTotal": { "type": "number" },
+        "habitsCompleted": { "type": "number" },
+        "focusMinutes": { "type": "number" },
+        "encouragement": { "type": "string", "maxLength": 300 },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "date", "score"]
+    },
+    "XPTransaction": {
+      "title": "XPTransaction",
+      "description": "Idempotent log of an awarded XP action",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "actionKey": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "reason": { "type": "string", "maxLength": 200 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "actionKey", "amount", "reason"]
+    },
+    "UserAchievement": {
+      "title": "UserAchievement",
+      "description": "User earned or in-progress achievement record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "achievementKey": { "type": "string", "maxLength": 100 },
+        "unlocked": { "type": "boolean" },
+        "progress": { "type": "number" },
+        "maxProgress": { "type": "number" },
+        "unlockedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "achievementKey", "unlocked"]
+    },
+    "WeeklyReview": {
+      "title": "WeeklyReview",
+      "description": "Saved weekly retrospective summary and next week plan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "weekStart": { "type": "string", "maxLength": 30 },
+        "weekEnd": { "type": "string", "maxLength": 30 },
+        "tasksCompleted": { "type": "number" },
+        "tasksTotal": { "type": "number" },
+        "habitRate": { "type": "number" },
+        "focusMinutes": { "type": "number" },
+        "avgDailyScore": { "type": "number" },
+        "bestDay": { "type": "string", "maxLength": 30 },
+        "achievementsEarned": { "type": "number" },
+        "reflectionWins": { "type": "string", "maxLength": 3000 },
+        "reflectionImprovements": { "type": "string", "maxLength": 3000 },
+        "nextWeekPriorities": { "type": "array" },
+        "nextWeekGoals": { "type": "array" },
+        "personalNotes": { "type": "string", "maxLength": 3000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "weekStart", "weekEnd"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User root document with profile and preferences"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "User tasks and to-dos"
+    },
+    "/users/{userId}/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "User goals and milestones"
+    },
+    "/users/{userId}/habits/{habitId}": {
+      "schema": "Habit",
+      "description": "User habits"
+    },
+    "/users/{userId}/habitRecords/{recordId}": {
+      "schema": "HabitRecord",
+      "description": "Habit completion log per day"
+    },
+    "/users/{userId}/focusSessions/{sessionId}": {
+      "schema": "FocusSession",
+      "description": "User logged focus sessions"
+    },
+    "/users/{userId}/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "User categories"
+    },
+    "/users/{userId}/dailyScores/{date}": {
+      "schema": "DailyScore",
+      "description": "Daily productivity score snapshots"
+    },
+    "/users/{userId}/xpTransactions/{txId}": {
+      "schema": "XPTransaction",
+      "description": "XP reward records and idempotency validation"
+    },
+    "/users/{userId}/achievements/{achievementId}": {
+      "schema": "UserAchievement",
+      "description": "Unlocked achievements and progress"
+    },
+    "/users/{userId}/weeklyReviews/{reviewId}": {
+      "schema": "WeeklyReview",
+      "description": "User weekly review retrospectives and planning"
+    }
+  }
+}

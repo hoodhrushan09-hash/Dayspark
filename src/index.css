@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-coral: #FF7058;
+  --color-yellow: #FFD166;
+  --color-lavender: #B8A7F9;
+  --color-mint: #8EDCC0;
+  --color-sky: #8BCBFA;
+  --color-offwhite: #FFFDF9;
+  --color-neutral-bg: #F8F8F5;
+  --color-text-main: #262626;
+  --color-text-sub: #747474;
+  --color-border: #E8E7E0;
+  --color-brand-accent: #FF7058;
+}
+
+.dark {
+  --color-neutral-bg: #161715;
+  --color-offwhite: #20221F;
+  --color-text-main: #F3F3F0;
+  --color-text-sub: #A0A09B;
+  --color-border: #2E302B;
+}
+
+body {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-text-main);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.25);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 150, 150, 0.45);
+}
+
+/* Polished Interactive Utility Classes */
+@keyframes sunrise-glow {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+}
+
+@keyframes sunrise-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shimmer-beam {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-sunrise-glow {
+  animation: sunrise-glow 3.2s ease-in-out infinite;
+}
+
+.animate-sunrise-float {
+  animation: sunrise-float 3.6s ease-in-out infinite;
+}
+
+.animate-shimmer-beam {
+  animation: shimmer-beam 1.9s ease-in-out infinite;
+}
+
+.btn-press {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.18s ease,
+              box-shadow 0.18s ease,
+              border-color 0.18s ease,
+              color 0.18s ease,
+              opacity 0.18s ease;
+}
+.btn-press:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.btn-press:active:not(:disabled) {
+  transform: translateY(0.5px) scale(0.985);
+}
+
+.card-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s ease,
+              border-color 0.22s ease,
+              background-color 0.22s ease;
+  will-change: transform;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.06), 0 4px 10px -4px rgba(0, 0, 0, 0.04);
+}
+.dark .card-lift:hover {
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.4), 0 4px 10px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Task card hover elevation and border transition */
+.task-card {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.18s ease,
+              border-color 0.18s ease,
+              background-color 0.18s ease,
+              opacity 0.18s ease;
+}
+.task-card:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.03);
+}
+.dark .task-card:hover {
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.35), 0 2px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth input focus & hover transitions */
+.input-smooth {
+  transition: border-color 0.18s ease,
+              box-shadow 0.18s ease,
+              background-color 0.18s ease;
+}
+.input-smooth:hover:not(:focus) {
+  border-color: rgba(255, 112, 88, 0.4);
+}
+.input-smooth:focus {
+  outline: none;
+  border-color: #FF7058;
+  box-shadow: 0 0 0 3px rgba(255, 112, 88, 0.18);
+}
+
+/* Interactive icon hover */
+.interactive-icon {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.18s ease,
+              background-color 0.18s ease;
+}
+.interactive-icon:hover {
+  transform: scale(1.1);
+}
+.interactive-icon:active {
+  transform: scale(0.92);
+}
+
+/* Sidebar navigation item transition */
+.sidebar-nav-item {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.18s ease,
+              color 0.18s ease,
+              box-shadow 0.18s ease;
+}
+.sidebar-nav-item:hover {
+  transform: translateX(3px);
+}
+.sidebar-nav-item:active {
+  transform: translateX(1px) scale(0.99);
+}
+
+/* Respect user's reduced motion preference (both OS and DaySpark setting) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    transform: none !important;
+  }
+}
+
+.reduced-motion *,
+.reduced-motion ::before,
+.reduced-motion ::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+  transform: none !important;
+}
