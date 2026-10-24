@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   CheckCircle2,
   Circle,
@@ -44,6 +44,8 @@ import { calculateProductivityStats } from '../../lib/stats';
 import { useAuth } from '../../contexts/AuthContext';
 import { ProductivityScoreCard } from './ProductivityScoreCard';
 import { XPProgressionWidget } from './XPProgressionWidget';
+import { DailyProgressRing } from './DailyProgressRing';
+import { CompletionCelebrationModal } from './CompletionCelebrationModal';
 import { ALL_ACHIEVEMENTS } from '../../lib/achievements';
 import { DEFAULT_DASHBOARD_CONFIG } from '../../services/userService';
 
@@ -131,6 +133,43 @@ export const TodayView: React.FC<TodayViewProps> = ({
   const upcomingTasks = tasks
     .filter((t) => !t.completed && t.dueDate && t.dueDate > todayStr)
     .slice(0, 3);
+
+  // Daily task counts for progress ring and celebration
+  const completedTodayCount = todayTasks.filter((t) => t.completed).length;
+  const remainingTodayCount = todayTasks.filter((t) => !t.completed).length;
+  const totalTodayCount = todayTasks.length;
+
+  // Completion Celebration state with session/refresh suppression
+  const [showCelebration, setShowCelebration] = useState(false);
+  const hasInitializedRef = useRef(false);
+  const prevRemainingCountRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const celebrationStorageKey = `dayspark_celebrated_${todayStr}`;
+
+    // Suppress celebration during initial page load / refresh
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      prevRemainingCountRef.current = remainingTodayCount;
+      return;
+    }
+
+    // Trigger celebration when user transitions from having remaining tasks to completing all scheduled tasks
+    if (
+      prevRemainingCountRef.current !== null &&
+      prevRemainingCountRef.current > 0 &&
+      remainingTodayCount === 0 &&
+      totalTodayCount > 0
+    ) {
+      const alreadyCelebrated = sessionStorage.getItem(celebrationStorageKey) === 'true';
+      if (!alreadyCelebrated) {
+        setShowCelebration(true);
+        sessionStorage.setItem(celebrationStorageKey, 'true');
+      }
+    }
+
+    prevRemainingCountRef.current = remainingTodayCount;
+  }, [remainingTodayCount, totalTodayCount, todayStr]);
 
   const stats = calculateProductivityStats(tasks, [], [], [], 7, todayStr);
 
@@ -248,6 +287,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </button>
         </div>
       )}
+
+      {/* Daily Progress Ring Feature */}
+      <DailyProgressRing
+        completedCount={completedTodayCount}
+        totalCount={totalTodayCount}
+        onOpenNewTaskModal={() => onOpenNewTaskModal(todayStr)}
+        onReplayCelebration={() => setShowCelebration(true)}
+      />
 
       {/* Metric summary chips */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -1097,6 +1144,13 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Completion Celebration Modal */}
+      <CompletionCelebrationModal
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        completedTasksCount={completedTodayCount}
+      />
     </div>
   );
 };

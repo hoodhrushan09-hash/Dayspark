@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   User,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
   signInWithPopup,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -47,31 +49,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     testConnection();
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        try {
-          const profile = await initializeUserProfile({
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-          });
-          setUserProfile(profile);
-        } catch (err) {
-          console.error('Error initializing user profile:', err);
-        }
-      } else {
-        setUserProfile(null);
-      }
-      setLoading(false);
-      setIsAuthReady(true);
-    });
+    let isMounted = true;
+    let unsubscribe: (() => void) | null = null;
 
-    return () => unsubscribe();
+    const initializeAuth = async () => {
+      try {
+        // Guarantee browserLocalPersistence is configured before listening to auth transitions
+        await setPersistence(auth, browserLocalPersistence);
+      } catch (err) {
+        console.warn('Failed to initialize browserLocalPersistence in AuthContext:', err);
+      }
+
+      if (!isMounted) return;
+
+      // Subscribe to onAuthStateChanged once persistence is ready
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (!isMounted) return;
+
+        setCurrentUser(user);
+
+        if (user) {
+          try {
+            const profile = await initializeUserProfile({
+              uid: user.uid,
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+            });
+            if (isMounted) {
+              setUserProfile(profile);
+            }
+          } catch (err) {
+            console.error('Error initializing user profile on auth state change:', err);
+          }
+        } else {
+          if (isMounted) {
+            setUserProfile(null);
+          }
+        }
+
+        if (isMounted) {
+          setLoading(false);
+          setIsAuthReady(true);
+        }
+      });
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const signInWithGoogle = async () => {
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+    } catch (err) {
+      console.warn('Persistence error on Google sign in:', err);
+    }
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     const result = await signInWithPopup(auth, provider);
@@ -87,6 +126,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUpWithEmail = async (email: string, password: string, displayName: string) => {
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+    } catch (err) {
+      console.warn('Persistence error on email sign up:', err);
+    }
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     if (displayName) {
       await firebaseUpdateProfile(userCredential.user, { displayName });
@@ -107,6 +151,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithEmail = async (email: string, password: string) => {
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+    } catch (err) {
+      console.warn('Persistence error on email sign in:', err);
+    }
     const result = await signInWithEmailAndPassword(auth, email, password);
     if (result.user) {
       const profile = await getUserProfile(result.user.uid);

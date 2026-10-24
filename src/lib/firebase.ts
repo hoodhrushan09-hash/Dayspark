@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -16,6 +16,14 @@ const resolvedFirebaseConfig = {
 
 const app = initializeApp(resolvedFirebaseConfig);
 export const auth = getAuth(app);
+
+// Explicitly configure browserLocalPersistence immediately so all authentication flows persist
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.warn('Failed to configure browserLocalPersistence on initial setup:', err);
+  });
+}
+
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true }, resolvedFirebaseConfig.firestoreDatabaseId);
 
 export function removeUndefinedFields<T extends Record<string, any>>(obj: T): T {

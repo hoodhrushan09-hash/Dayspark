@@ -1225,6 +1225,17 @@ export const AppShell: React.FC = () => {
           reminders,
         }}
       />
+
+      {/* Floating Quick-Add Action Button (FAB) */}
+      <button
+        type="button"
+        onClick={() => setIsQuickAddOpen(true)}
+        className="btn-press fixed bottom-6 right-6 z-40 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#FF7058] to-[#FF8570] hover:from-[#F06148] hover:to-[#FF7058] text-white shadow-lg hover:shadow-xl hover:shadow-[#FF7058]/35 flex items-center justify-center transition-all duration-200 hover:scale-108 active:scale-95 cursor-pointer focus-visible:outline-hidden focus-visible:ring-3 focus-visible:ring-[#FF7058]"
+        title="Quick Add Task (or press N)"
+        aria-label="Quick Add Task"
+      >
+        <Plus className="w-6 h-6 stroke-[2.5] transition-transform duration-200 hover:rotate-90" />
+      </button>
     </div>
   );
 };

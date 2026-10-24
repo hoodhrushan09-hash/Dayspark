@@ -105,8 +105,11 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
 
         {/* Due Date Presets */}
         <div>
-          <label className="block text-xs font-semibold text-[#262626] dark:text-[#F3F3F0] mb-1.5 flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-[#747474]" /> Due Date
+          <label className="block text-xs font-semibold text-[#262626] dark:text-[#F3F3F0] mb-1.5 flex items-center justify-between">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-[#747474]" /> Due Date
+            </span>
+            <span className="text-[10px] font-normal text-[#747474] dark:text-[#A0A09B]">Optional</span>
           </label>
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <button
@@ -137,7 +140,11 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
             <button
               type="button"
               onClick={() => setDueDate('')}
-              className="btn-press px-2.5 py-1 text-xs font-medium rounded-lg border border-[#E8E7E0] dark:border-[#2E302B] text-[#747474] hover:bg-[#F5F5F2] dark:hover:bg-[#2E302B] cursor-pointer"
+              className={`btn-press px-2.5 py-1 text-xs font-medium rounded-lg border cursor-pointer ${
+                !dueDate
+                  ? 'bg-[#FF7058] text-white border-[#FF7058]'
+                  : 'border-[#E8E7E0] dark:border-[#2E302B] text-[#747474] hover:bg-[#F5F5F2] dark:hover:bg-[#2E302B]'
+              }`}
             >
               No Date
             </button>
